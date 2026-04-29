@@ -1,0 +1,143 @@
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+import net.darkhax.curseforgegradle.UploadArtifact
+
+plugins {
+    id 'dev.architectury.loom' version '1.10-SNAPSHOT'
+    id "com.gradleup.shadow" version "8.3.9"
+    id 'net.darkhax.curseforgegradle' version '1.1.+'
+}
+
+boolean isNeo = loom.platform.get().displayName() == "NeoForge"
+
+configurations {
+    shadow
+    implementation.extendsFrom(shadow)
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    mergeServiceFiles()
+    archiveClassifier = "dev-shadow"
+    exclude "LICENSE_MixinExtras"
+}
+
+remapJar {
+    dependsOn tasks.named("shadowJar")
+    inputFile = shadowJar.archiveFile
+    archiveClassifier = null
+    exclude "LICENSE_MixinExtras"
+}
+
+group = project.maven_group
+version = "${project.minecraft_version}-${project.mod_version}"
+
+base {
+    archivesName = project.archives_name
+}
+
+loom {
+    silentMojangMappingsLicense()
+}
+
+repositories {
+    maven { name = "ParchmentMC";    url = 'https://maven.parchmentmc.org' }
+    maven { name = "MinecraftForge"; url = "https://files.minecraftforge.net/maven/" }
+    maven { name = "NeoForged";      url = 'https://maven.neoforged.net/releases' }
+    maven { name = "FabricMC";       url = "https://maven.fabricmc.net/" }
+    maven { name = "Architectury";   url = "https://maven.architectury.dev/" }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content { includeGroup "maven.modrinth" }
+    }
+    maven {
+        name = "CurseMaven"
+        url = "https://cursemaven.com"
+        content { includeGroup "curse.maven" }
+    }
+}
+
+def versionMap = [
+    "1.20.1" : [forge: "47.4.2"       , parchment: "2023.09.03", duplicationless: "8003907"],
+    "1.16.5" : [forge: "36.2.42"      , parchment: "2022.03.06", duplicationless: "8003909"],
+    "1.21.1" : [neo  : "21.1.192"     , parchment: "2024.11.17", duplicationless: "8003903"],
+    "1.21.11": [neo  : "21.11.30-beta", parchment: "2025.12.20", duplicationless: "8003911"]
+]
+
+HashMap<String, String> versionInfo = versionMap[minecraft_version]
+
+dependencies {
+    minecraft "net.minecraft:minecraft:$project.minecraft_version"
+    mappings loom.layered {
+        officialMojangMappings()
+        parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${versionInfo.parchment}@zip")
+    }
+
+    if (isNeo) {
+        neoForge "net.neoforged:neoforge:${versionInfo.neo}"
+    } else {
+        forge "net.minecraftforge:forge:${project.minecraft_version}-${versionInfo.forge}"
+    }
+}
+
+processResources {
+    inputs.property 'version', project.version
+    if (isNeo) {
+        filesMatching('META-INF/neoforge.mods.toml') {
+            expand version: project.version
+        }
+        exclude("META-INF/mods.toml")
+    } else {
+        filesMatching('META-INF/mods.toml') {
+            expand version: project.version
+        }
+        exclude("META-INF/neoforge.mods.toml")
+    }
+}
+
+def javaInfoMap = [
+        "1.20.1":  [version  : JavaVersion.VERSION_17,  release  : 17, supported: ["Java 17", "Java 21", "Java 22"]],
+        "1.16.5":  [version  : JavaVersion.VERSION_1_8, release  : 8,  supported: ["Java 8", "Java 17", "Java 21", "Java 22"]],
+        "1.21.1":  [version  : JavaVersion.VERSION_21,  release  : 21, supported: ["Java 21", "Java 22"]],
+        "1.21.11": [version  : JavaVersion.VERSION_21,  release  : 21, supported: ["Java 21", "Java 22"]]
+]
+
+def javaInfo = javaInfoMap[minecraft_version]
+
+java {
+    withSourcesJar()
+    JavaVersion javaVer = (JavaVersion) javaInfo.version
+    sourceCompatibility = javaVer
+    targetCompatibility = javaVer
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = (int) javaInfo.release
+}
+
+String CHANGELOG = file("CHANGELOG.md").getText("UTF-8")
+
+tasks.register("publishCurseForge", TaskPublishCurseForge) {
+    if (!cf_project_id.isEmpty()) {
+        apiToken = System.getenv("CURSEFORGE_TOKEN")
+        disableVersionDetection()
+    
+        UploadArtifact mainFile = upload(cf_project_id, remapJar)
+        mainFile.displayName = "${archives_name}-${version}"
+        mainFile.releaseType = "release"
+        mainFile.changelog = CHANGELOG
+        mainFile.changelogType = "markdown"
+        mainFile.addModLoader(isNeo ? "NeoForge" : "Forge")
+        Iterator<String> supported = javaInfo.supported.iterator()
+        while (supported.hasNext()) {
+            mainFile.addJavaVersion(supported.next());
+        }
+        mainFile.addGameVersion(minecraft_version)
+    
+        UploadArtifact sourcesFile = mainFile.withAdditionalFile(sourcesJar)
+        sourcesFile.changelog = CHANGELOG
+        sourcesFile.changelogType = "markdown"
+    } else {
+        System.err.println("CurseForge Project ID is not provided")
+    }
+}
