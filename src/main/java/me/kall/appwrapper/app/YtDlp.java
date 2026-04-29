@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-public class YtDlp {
+public final class YtDlp {
     public static final String VIDEO_DOWNLOADING_FILE = "video-downloading.txt";
     public static final String AUDIO_DOWNLOADING_FILE = "audio-downloading.txt";
 

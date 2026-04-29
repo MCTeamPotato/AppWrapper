@@ -19,11 +19,10 @@ public final class LifetimeController {
     private final AtomicBoolean paused = new AtomicBoolean();
 
     private final AtomicBoolean lagSpike = new AtomicBoolean();
-    private final AtomicBoolean soundSync = new AtomicBoolean();
 
     private @Nullable Supplier<Runnable> endRestartFunc, pauseFunc, resumeFunc;
 
-    private @Nullable Supplier<DoubleConsumer> synchronizeFunc, soundSyncFunc;
+    private @Nullable Supplier<DoubleConsumer> synchronizeFunc;
 
     private final double fps;
     private final long duration;
@@ -46,11 +45,6 @@ public final class LifetimeController {
 
     public LifetimeController setSynchronizeFunc(@NotNull Supplier<DoubleConsumer> synchronizeFunc) {
         this.synchronizeFunc = synchronizeFunc;
-        return this;
-    }
-
-    public LifetimeController setSoundSyncFunc(@NotNull Supplier<DoubleConsumer> soundSyncFunc) {
-        this.soundSyncFunc = soundSyncFunc;
         return this;
     }
 
@@ -96,10 +90,6 @@ public final class LifetimeController {
         this.lagSpike.set(true);
     }
 
-    public void detectSoundSync() {
-        this.soundSync.set(true);
-    }
-
     public long nanoTimeFromSetup() {
         return System.nanoTime() - this.absoluteSetupTime.get();
     }
@@ -143,10 +133,6 @@ public final class LifetimeController {
                 System.err.println("Lag spike is detected. Restarting.");
                 this.lastLagSpike.set(now);
             }
-        }
-
-        if (this.soundSyncFunc != null && this.soundSync.compareAndSet(true, false)) {
-            this.soundSyncFunc.get().accept((double) this.nanoTimeFromSetup() / 1_000_000_000.0);
         }
     }
 }

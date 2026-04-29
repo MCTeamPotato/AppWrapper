@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer> {
+public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer> {
     private final LinkedBlockingQueue<ByteBuffer> freeBuffers;
     private final Set<ByteBuffer> allBuffers = ConcurrentHashMap.newKeySet();
 

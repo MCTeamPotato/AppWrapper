@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class AudioProducer extends AbstractProducer {
+public final class AudioProducer extends AbstractProducer {
     private final AtomicLong device = new AtomicLong(), context = new AtomicLong();
     private final AtomicInteger source = new AtomicInteger();
 

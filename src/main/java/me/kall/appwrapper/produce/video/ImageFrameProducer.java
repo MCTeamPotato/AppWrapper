@@ -11,7 +11,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-public class ImageFrameProducer extends AbstractFrameProducer<NativeImage> {
+public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage> {
     private ByteBuffer frame;
 
     private ImageFrameProducer(MediaArgs mediaArgs, int bufferEnlarger, String absFFmpegPath) {
