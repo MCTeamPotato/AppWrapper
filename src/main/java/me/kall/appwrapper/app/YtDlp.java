@@ -46,11 +46,13 @@ public final class YtDlp {
         this.absCookieSource = cookie == null ? "" : cookie;
     }
 
-    public CompletableFuture<Downloaded> download(String url, Path outputDirectory) {
+    @Contract("_, _ -> new")
+    public @NotNull CompletableFuture<Downloaded> download(String url, Path outputDirectory) {
         return this.download(url, url, outputDirectory);
     }
 
-    public CompletableFuture<Downloaded> download(String videoUrl, String audioUrl, Path outputDirectory) {
+    @Contract("_, _, _ -> new")
+    public @NotNull CompletableFuture<Downloaded> download(String videoUrl, String audioUrl, Path outputDirectory) {
         return CompletableFuture.supplyAsync(() -> {
             Path videoDownloading = outputDirectory.resolve(VIDEO_DOWNLOADING_FILE);
             Path audioDownloading = outputDirectory.resolve(AUDIO_DOWNLOADING_FILE);
@@ -81,12 +83,12 @@ public final class YtDlp {
         }, DOWNLOADER);
     }
 
-    public Path downloadVideo(String url, @NotNull Path outputDirectory, String outputName) {
+    public @NotNull Path downloadVideo(String url, @NotNull Path outputDirectory, String outputName) {
         Executable.runCommand(this.videoCommand(url, outputDirectory.resolve(outputName + ".%(ext)s").toString()), true);
         return outputDirectory.resolve(outputName + ".mp4");
     }
 
-    public Path downloadAudio(String url, @NotNull Path outputDirectory, String outputName) {
+    public @NotNull Path downloadAudio(String url, @NotNull Path outputDirectory, String outputName) {
         Executable.runCommand(this.audioCommand(url, outputDirectory.resolve(outputName + ".%(ext)s").toString()), true);
         return outputDirectory.resolve(outputName + ".mp3");
     }

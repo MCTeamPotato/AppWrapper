@@ -17,14 +17,14 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
     private final LinkedBlockingQueue<ByteBuffer> freeBuffers;
     private final Set<ByteBuffer> allBuffers = ConcurrentHashMap.newKeySet();
 
-    private BufferFrameProducer(MediaArgs mediaArgs, int bufferEnlarger, String absFFmpegPath) {
-        super(mediaArgs, mediaArgs.width() * mediaArgs.height() + (mediaArgs.width() / 2) * (mediaArgs.height() / 2) * 2, bufferEnlarger, absFFmpegPath);
+    private BufferFrameProducer(MediaArgs mediaArgs, int bufferSeconds, String absFFmpegPath) {
+        super(mediaArgs, mediaArgs.width() * mediaArgs.height() + (mediaArgs.width() / 2) * (mediaArgs.height() / 2) * 2, bufferSeconds, absFFmpegPath);
         this.freeBuffers = new LinkedBlockingQueue<>(this.bufferCapacity);
     }
 
     @Contract("_, _, _ -> new")
-    public static @NotNull BufferFrameProducer create(MediaArgs mediaArgs, int bufferEnlarger, String absFFmpegPath) {
-        return new BufferFrameProducer(mediaArgs, bufferEnlarger, absFFmpegPath);
+    public static @NotNull BufferFrameProducer create(MediaArgs mediaArgs, int bufferSeconds, String absFFmpegPath) {
+        return new BufferFrameProducer(mediaArgs, bufferSeconds, absFFmpegPath);
     }
 
     @Override
@@ -50,7 +50,7 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
     }
 
     @Override
-    protected ByteBuffer frameCreation() {
+    protected @NotNull ByteBuffer frameCreation() {
         ByteBuffer buffer = this.freeBuffers.poll();
         if (buffer == null) {
             buffer = MemoryUtil.memAlloc(this.frameSize);
@@ -65,7 +65,8 @@ public final class BufferFrameProducer extends AbstractFrameProducer<ByteBuffer>
     }
 
     @Override
-    protected String[] setCommand(double setupTime) {
+    @Contract("_ -> new")
+    protected String @NotNull [] setCommand(double setupTime) {
         return new String[]{this.absFFmpegPath, "-loglevel", "quiet", "-hwaccel", "auto", "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absVideoPath(), "-map", "0:v:0", "-an", "-sn", "-dn", "-threads", "0", "-vf", "fps=" + this.mediaArgs.fps() + ",scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear,format=yuv420p", "-f", "rawvideo", "-vcodec", "rawvideo", "-tune", "zerolatency", "-"};
     }
 

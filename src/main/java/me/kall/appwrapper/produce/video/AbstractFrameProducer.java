@@ -38,10 +38,10 @@ public abstract class AbstractFrameProducer<T> extends AbstractProducer {
     protected final AtomicReference<AudioProducer> audio = new AtomicReference<>();
     protected final AtomicReference<Double2ObjectFunction<AudioProducer>> audioCreation = new AtomicReference<>();
 
-    protected AbstractFrameProducer(MediaArgs mediaArgs, int frameSize, int bufferEnlarger, String absFFmpegPath) {
+    protected AbstractFrameProducer(MediaArgs mediaArgs, int frameSize, int bufferSeconds, String absFFmpegPath) {
         this.mediaArgs = mediaArgs;
         this.frameSize = frameSize;
-        this.bufferCapacity = (int) (this.mediaArgs.fps() * bufferEnlarger);
+        this.bufferCapacity = (int) (this.mediaArgs.fps() * bufferSeconds);
         this.absFFmpegPath = absFFmpegPath;
         this.frames = new LinkedBlockingQueue<>(this.bufferCapacity);
         this.timeCostDebugger = new TimeCostDebugger(this.debugLength());

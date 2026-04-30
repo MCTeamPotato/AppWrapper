@@ -49,7 +49,8 @@ public final class AudioProducer extends AbstractProducer {
     }
 
     @Override
-    protected String[] setCommand(double setupTime) {
+    @Contract("_ -> new")
+    protected String @NotNull [] setCommand(double setupTime) {
         return new String[]{this.absFFmpegPath, "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absAudioPath(), "-vn", "-f", "s16le", "-ac", String.valueOf(this.mediaArgs.channelCount()), "-ar", String.valueOf(this.mediaArgs.sampleRate()), "-loglevel", "error", "-"};
     }
 

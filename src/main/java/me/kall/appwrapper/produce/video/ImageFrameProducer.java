@@ -14,13 +14,13 @@ import java.nio.ByteBuffer;
 public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage> {
     private ByteBuffer frame;
 
-    private ImageFrameProducer(MediaArgs mediaArgs, int bufferEnlarger, String absFFmpegPath) {
-        super(mediaArgs, mediaArgs.width() * mediaArgs.height() * 3, bufferEnlarger, absFFmpegPath);
+    private ImageFrameProducer(MediaArgs mediaArgs, int bufferSeconds, String absFFmpegPath) {
+        super(mediaArgs, mediaArgs.width() * mediaArgs.height() * 3, bufferSeconds, absFFmpegPath);
     }
 
     @Contract("_, _, _ -> new")
-    public static @NotNull ImageFrameProducer create(MediaArgs mediaArgs, int bufferEnlarger, String absFFmpegPath) {
-        return new ImageFrameProducer(mediaArgs, bufferEnlarger, absFFmpegPath);
+    public static @NotNull ImageFrameProducer create(MediaArgs mediaArgs, int bufferSeconds, String absFFmpegPath) {
+        return new ImageFrameProducer(mediaArgs, bufferSeconds, absFFmpegPath);
     }
 
     @Override
@@ -64,7 +64,8 @@ public final class ImageFrameProducer extends AbstractFrameProducer<NativeImage>
     }
 
     @Override
-    protected String[] setCommand(double setupTime) {
+    @Contract("_ -> new")
+    protected String @NotNull [] setCommand(double setupTime) {
         return new String[]{this.absFFmpegPath, "-loglevel", "quiet", "-hwaccel", "auto", "-ss", String.valueOf(setupTime), "-i", this.mediaArgs.absVideoPath(), "-map", "0:v:0", "-an", "-sn", "-dn", "-threads", "0", "-vf", "fps=" + this.mediaArgs.fps() + ",scale=" + this.mediaArgs.width() + ":" + this.mediaArgs.height() + ":flags=fast_bilinear,format=rgb24", "-f", "rawvideo", "-vcodec", "rawvideo", "-tune", "zerolatency", "-"};
     }
 
